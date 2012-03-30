@@ -190,7 +190,7 @@ void disp(void) {
 		0.0, 1.0, 0.0);	// up
 
 	glColor3f(1.0f, 1.0f, 1.0f);
-	glPointSize(2.0f);
+	glPointSize(4.0f);
 	
 	const float min_color = 0.01f;
 	const float max_color = 1.0f;
