@@ -48,6 +48,9 @@ static float MAX_X, MAX_Y, MAX_Z, MIN_X, MIN_Y, MIN_Z;
 static float* map_mesh;
 static float* map_strip;
 static size_t num_map_points;
+
+static const float WIDTH = 1024;
+static const float HEIGHT = 768;
  
 int main(int argc, char** argv) {
 	
@@ -57,7 +60,7 @@ int main(int argc, char** argv) {
 	
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 
-	glutInitWindowSize(1280, 800);
+	glutInitWindowSize(WIDTH, HEIGHT);
 	glutInitWindowPosition(0, 0);
 	win = glutCreateWindow("ll_map demo");
 	glutFullScreen();
@@ -85,8 +88,8 @@ void build_map(int argc, char** argv) {
 		my_map.build_map(
 			44.476221,	// Latitude
 			-73.205595,	// Longitude
-			4000.00,	// Width
-			50);		// Density
+			20000.00,	// Width
+			100);		// Density
 
 	else
 		// Read the elevation data from MapQuest
@@ -106,6 +109,7 @@ void build_map(int argc, char** argv) {
 	MIN_X = MIN_Y = MIN_Z = FLT_MAX;
 	map_mesh = (float*)malloc(sizeof(float) * num_map_points * 3);
 	size_t point_index = 0;
+	bool no_internet = true;
 	for (size_t i=0; i<num_map_points*3; i+=3) {
 		size_t index_x, index_y;
 
@@ -116,6 +120,8 @@ void build_map(int argc, char** argv) {
 
 		map_mesh[i+0] = index_x * my_map.get_spacing_meters();	// X
 		map_mesh[i+1] =  my_map.get_height(index_x, index_y);	// Y
+		if (map_mesh[i+1] < 0)
+			map_mesh[i+1] = 0;
 		map_mesh[i+2] = index_y * my_map.get_spacing_meters();	// Z
 		map_mesh[i+1] *= 1; //my_map.get_spacing_meters(); // 10.0f;
 
@@ -129,6 +135,9 @@ void build_map(int argc, char** argv) {
 		point_index++;
 
 		std::cout << "(" << map_mesh[i] << "," << map_mesh[i+1] << "," << map_mesh[i+2] << ")" << std::endl;
+
+		if (map_mesh[i+1] != 0)
+			no_internet = false;
 	}
 
 	// Get Center from maxes
@@ -137,6 +146,11 @@ void build_map(int argc, char** argv) {
 	center_z = MIN_Z + (MAX_Z - MIN_Z) / 2;
 
 	move_speed = my_map.get_width_meters() / 1000.0f;
+
+	if (no_internet) {
+		std:: cout << "Can I has internet?" << std::endl;
+		exit(1);
+	}
 }
 
 void init() {
@@ -145,7 +159,7 @@ void init() {
 	glMatrixMode(GL_PROJECTION);
 	gluPerspective(
 		40.0, 	// Field of view (Degrees)
-		(1280.0/800.0), 	// aspect ratio
+		(WIDTH/HEIGHT), 	// aspect ratio
 		0.1, 	// z near
 		1000000.0);	// z far
 
@@ -201,6 +215,9 @@ void disp(void) {
 		float y_percent = (map_mesh[i+1] - MIN_Y) / y_range;
 		float color = min_color + y_percent * color_range;
 		glColor3f(color, color, color);
+
+		//if (map_mesh[i+1] < 0)
+			//glColor3f(0.0f, 0.0f, 1.0f);
 		glVertex3f(map_mesh[i], map_mesh[i+1], map_mesh[i+2]);
 	}
 	glEnd();
