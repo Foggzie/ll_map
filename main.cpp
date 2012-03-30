@@ -14,6 +14,7 @@ using namespace gfox;
 
 // The Map
 ll_map burlington_map;
+void build_map(int argc, char** argv);
 
 // Functions for GL delegates
 void disp();
@@ -30,7 +31,9 @@ static int win;
 static bool keyboard[256];
 
 // Camera Stuff
+static float move_speed = 1.0f;
 static float distance = 5.0f;
+static float height = 1.0f;
 static float rotation = 0.0f;
 static float center_x;
 static float center_y;
@@ -40,7 +43,9 @@ static float center_z;
 static float* map_mesh;
 static size_t num_map_points;
  
-int main(int argc, char* argv[]) {
+int main(int argc, char** argv) {
+	
+	build_map(argc, argv);
 
 	glutInit(&argc, argv);
 	
@@ -67,14 +72,22 @@ int main(int argc, char* argv[]) {
 	return 0;
 }
 
-void init() {
+void build_map(int argc, char** argv) {
+	if (argc != 5)
+		// Read the elevation data from MapQuest
+		burlington_map.build_map(
+			44.476221,	// Latitude
+			-73.205595,	// Longitude
+			4000.00,	// Width
+			200);		// Density
 
-	// Read the elevation data from MapQuest
-	burlington_map.build_map(
-		44.476221,	// Latitude
-		-73.205595,	// Longitude
-		1000.00,	// Width
-		50);		// Density
+	else
+		// Read the elevation data from MapQuest
+		burlington_map.build_map(
+			atof(argv[1]),
+			atof(argv[2]),
+			atof(argv[3]),
+			atof(argv[4]));
 
 	// Determine number of points on the map
 	num_map_points = burlington_map.get_density();
@@ -98,7 +111,7 @@ void init() {
 		map_mesh[i+0] = index_x * burlington_map.get_spacing_meters();	// X
 		map_mesh[i+1] =  burlington_map.get_height(index_x, index_y);	// Y
 		map_mesh[i+2] = index_y * burlington_map.get_spacing_meters();	// Z
-		map_mesh[i+1] *= 10.0f;
+		map_mesh[i+1] *= 1; //burlington_map.get_spacing_meters(); // 10.0f;
 
 		if (map_mesh[i] > MAX_X) MAX_X = map_mesh[i];
 		if (map_mesh[i] < MIN_X) MIN_X = map_mesh[i];
@@ -117,6 +130,10 @@ void init() {
 	center_y = MIN_Y + (MAX_Y - MIN_Y) / 2;
 	center_z = MIN_Z + (MAX_Z - MIN_Z) / 2;
 
+	move_speed = burlington_map.get_spacing_meters() / 10.0f;
+}
+
+void init() {
 	//glEnable(GL_LIGHTING);
 	glEnable(GL_DEPTH_TEST);
 
@@ -155,11 +172,11 @@ void disp(void) {
 	glPushMatrix();
 	
 	float eye_x, eye_y, eye_z;
-	eye_x = cos(rotation) * distance;
-	eye_z = sin(rotation) * distance;
+	eye_x = center_x + cos(rotation) * distance;
+	eye_z = center_z + sin(rotation) * distance;
 		 
 	gluLookAt(
-		eye_x, distance, eye_z,	// eye
+		eye_x, center_y + height, eye_z,	// eye
 		center_x, center_y, center_z, // center
 		0.0, 1.0, 0.0);	// up
 
@@ -196,12 +213,16 @@ void reshape(int width, int height) {
 
 void update() {
 	const float ZOOM_SPEED = 100.0f;
-	const float ROTATE_SPEED = 0.1f;
+	const float ROTATE_SPEED = 0.05f;
 
 	if (keyboard[(int)'w'])
-		distance -= ZOOM_SPEED;
+		distance -= move_speed;
 	if (keyboard[(int)'s'])
-		distance += ZOOM_SPEED;
+		distance += move_speed;
+	if (keyboard[(int)'f'])
+		height -= move_speed;
+	if (keyboard[(int)'r'])
+		height += move_speed;
 	if (keyboard[(int)'a'])
 		rotation -= ROTATE_SPEED;
 	if (keyboard[(int)'d'])

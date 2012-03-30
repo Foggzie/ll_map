@@ -251,7 +251,7 @@ void ll_map::from_xy_to_ll(size_t x, size_t y, double* lat, double* lon) {
 	double new_lat, new_lon;
 	
 	new_lat = m_upper_left_lat + x * m_spacing_degrees;
-	new_lon = m_upper_left_lat + y * m_spacing_degrees;
+	new_lon = m_upper_left_lon + y * m_spacing_degrees;
 	
 	// Set the new latitudes and longitudes
 	*lat = new_lat;
