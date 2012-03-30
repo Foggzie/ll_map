@@ -1,5 +1,8 @@
 #include "ll_map.h"
 
+namespace gfox
+{
+
 void init_my_string(my_string *s) {
 	s->len = 0;
 	s->ptr = (char*)malloc(s->len+1);
@@ -79,6 +82,7 @@ void pull_data(double* ll, double* heights, size_t num_points) {
 			char height_tag[] = "<height>";
 
 			// Search through the xml
+			size_t num_heights = 0;
 			for (size_t i = 0; i < xml_length - 9; i++) {
 
 				char* c = xml_data->ptr + i;
@@ -111,6 +115,8 @@ void pull_data(double* ll, double* heights, size_t num_points) {
 	
 				float height = atof(height_string);
 				std::cout << height << std::endl;
+
+				heights[num_heights++] = height;
 
 				free(height_string);
 			}
@@ -257,4 +263,6 @@ float ll_map::get_height(size_t x, size_t y) {
 		return 0;
 
 	return m_map[x][y];
+}
+
 }

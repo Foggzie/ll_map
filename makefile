@@ -6,7 +6,7 @@ SRC=main.cpp
 CFLAGS=-g
 LFLAGS=-g -c
 
-LIBS=-lcurl
+LIBS=-lcurl -lGL -lGLU -lglut
 
 $(EXE) : $(SRC) ll_map.o
 	$(CC) $(CFLAGS) $(LIBS) ll_map.o $< -o $@

@@ -19,6 +19,9 @@
 #include <string.h>
 #include <curl/curl.h>
 
+namespace gfox
+{
+
 struct my_string {
 	char *ptr;
 	size_t len;
@@ -63,7 +66,12 @@ public:
 	void from_ll_to_xy(double, double, size_t*, size_t*);
 	void from_xy_to_int(size_t, size_t, size_t*);
 	void from_xy_to_ll(size_t, size_t, double*, double*);
+	
+	double get_density() { return m_density; }
 	float get_height(size_t, size_t);
+	double get_spacing_meters() { return m_spacing_meters; }
 };
+
+}
 
 #endif
