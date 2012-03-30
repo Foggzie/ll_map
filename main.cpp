@@ -13,7 +13,7 @@ using namespace gfox;
 #include <sys/time.h>
 
 // The Map
-ll_map burlington_map;
+ll_map my_map;
 void build_map(int argc, char** argv);
 
 // Functions for GL delegates
@@ -26,6 +26,10 @@ void update();
 
 // Window ID
 static int win;
+
+// Light
+GLfloat light0_diffuse[] = {1.0, 1.0, 1.0, 1.0};
+GLfloat light0_position[] = {-1.0, 0.0, 0.0, 0.0};
 
 // For key input
 static bool keyboard[256];
@@ -40,7 +44,9 @@ static float center_y;
 static float center_z;
 
 // All the 'll_map' dumped into a mesh
+static float MAX_X, MAX_Y, MAX_Z, MIN_X, MIN_Y, MIN_Z;
 static float* map_mesh;
+static float* map_strip;
 static size_t num_map_points;
  
 int main(int argc, char** argv) {
@@ -62,40 +68,40 @@ int main(int argc, char** argv) {
 	glutIdleFunc(update);
 	glutReshapeFunc(reshape);
 
-	glClearColor(0.08, 0.08, 0.08, 1.0);
+	glClearColor(0.00, 0.00, 0.00, 1.0);
 
 	init();
 
 	glutMainLoop();
 
 	delete[] map_mesh;
+	//delete[] map_strip;
 	return 0;
 }
 
 void build_map(int argc, char** argv) {
 	if (argc != 5)
 		// Read the elevation data from MapQuest
-		burlington_map.build_map(
+		my_map.build_map(
 			44.476221,	// Latitude
 			-73.205595,	// Longitude
 			4000.00,	// Width
-			200);		// Density
+			50);		// Density
 
 	else
 		// Read the elevation data from MapQuest
-		burlington_map.build_map(
+		my_map.build_map(
 			atof(argv[1]),
 			atof(argv[2]),
 			atof(argv[3]),
 			atof(argv[4]));
 
 	// Determine number of points on the map
-	num_map_points = burlington_map.get_density();
+	num_map_points = my_map.get_density();
 	num_map_points *= num_map_points;
 
 	// Dump all the data into the map_mesh
 	// Also determine maxes
-	float MAX_X, MAX_Y, MAX_Z, MIN_X, MIN_Y, MIN_Z;
 	MAX_X = MAX_Y = MAX_Z = FLT_MIN;
 	MIN_X = MIN_Y = MIN_Z = FLT_MAX;
 	map_mesh = (float*)malloc(sizeof(float) * num_map_points * 3);
@@ -103,15 +109,15 @@ void build_map(int argc, char** argv) {
 	for (size_t i=0; i<num_map_points*3; i+=3) {
 		size_t index_x, index_y;
 
-		burlington_map.from_int_to_xy(point_index, &index_x, &index_y);
+		my_map.from_int_to_xy(point_index, &index_x, &index_y);
 
 		//std::cout << index_x << "," << index_y << std::endl;
-		std::cout << burlington_map.get_height(index_x, index_y) << std::endl;
+		std::cout << my_map.get_height(index_x, index_y) << std::endl;
 
-		map_mesh[i+0] = index_x * burlington_map.get_spacing_meters();	// X
-		map_mesh[i+1] =  burlington_map.get_height(index_x, index_y);	// Y
-		map_mesh[i+2] = index_y * burlington_map.get_spacing_meters();	// Z
-		map_mesh[i+1] *= 1; //burlington_map.get_spacing_meters(); // 10.0f;
+		map_mesh[i+0] = index_x * my_map.get_spacing_meters();	// X
+		map_mesh[i+1] =  my_map.get_height(index_x, index_y);	// Y
+		map_mesh[i+2] = index_y * my_map.get_spacing_meters();	// Z
+		map_mesh[i+1] *= 1; //my_map.get_spacing_meters(); // 10.0f;
 
 		if (map_mesh[i] > MAX_X) MAX_X = map_mesh[i];
 		if (map_mesh[i] < MIN_X) MIN_X = map_mesh[i];
@@ -130,11 +136,10 @@ void build_map(int argc, char** argv) {
 	center_y = MIN_Y + (MAX_Y - MIN_Y) / 2;
 	center_z = MIN_Z + (MAX_Z - MIN_Z) / 2;
 
-	move_speed = burlington_map.get_spacing_meters() / 10.0f;
+	move_speed = my_map.get_width_meters() / 1000.0f;
 }
 
 void init() {
-	//glEnable(GL_LIGHTING);
 	glEnable(GL_DEPTH_TEST);
 
 	glMatrixMode(GL_PROJECTION);
@@ -147,6 +152,10 @@ void init() {
 	glMatrixMode(GL_MODELVIEW);
 
 	glTranslatef(0.0, 0.0, 1.8);
+
+	// Setup a diffuse light
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
+	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
 
 	// Init 'keyboard'
 	for (int i = 0; i < 256; i++)
@@ -182,16 +191,53 @@ void disp(void) {
 
 	glColor3f(1.0f, 1.0f, 1.0f);
 	glPointSize(2.0f);
-	glBegin(GL_POINTS);
 	
+	const float min_color = 0.01f;
+	const float max_color = 1.0f;
+	float y_range = MAX_Y - MIN_Y;
+	float color_range = max_color - min_color;
+	glBegin(GL_POINTS);
 	for (int i=0; i<num_map_points*3; i+=3) {
+		float y_percent = (map_mesh[i+1] - MIN_Y) / y_range;
+		float color = min_color + y_percent * color_range;
+		glColor3f(color, color, color);
 		glVertex3f(map_mesh[i], map_mesh[i+1], map_mesh[i+2]);
 	}
-
-	//glVertex3f(0.0f, 0.0f, 0.0f);
-	//glVertex3f(0.0f, 1.0f, 0.0f);
-	//glVertex3f(2.0f, 0.0f, 0.0f);
 	glEnd();
+
+	/*
+	// Draw triangle strips across
+	size_t index_x, index_y, index_linear;
+	
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	glBegin(GL_TRIANGLE_STRIP);
+	for (int j=0; j<my_map.get_density()-1; j++) {
+	for (int i=0; i<my_map.get_density(); i++) {
+		index_x = i;
+		index_y = j;
+
+		index_linear = my_map.get_density() * index_y + index_x;
+		index_linear *= 3;
+		glVertex3f(
+			map_mesh[index_linear],
+			map_mesh[index_linear+1],
+			map_mesh[index_linear+2]);
+
+		index_y = j+1;
+
+		index_linear = my_map.get_density() * index_y + index_x;
+		index_linear *= 3;
+		glVertex3f(
+			map_mesh[index_linear],
+			map_mesh[index_linear+1],
+			map_mesh[index_linear+2]);
+	}
+	}
+	glEnd();
+	glDisable(GL_LIGHTING);
+	glDisable(GL_LIGHT0);
+	*/
 	glPopMatrix();
 
 	// Swap buffers

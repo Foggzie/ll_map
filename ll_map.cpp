@@ -153,8 +153,8 @@ void ll_map::build_map(double lat, double lon, double width_meters, size_t densi
 	m_spacing_degrees = m_width_degrees / m_density;
 
 	// Calculate the upper left for easy calculations later on
-	m_upper_left_lat = m_latitude - m_width_degrees * (m_density-1) / 2;
-	m_upper_left_lon = m_longitude - m_width_degrees * (m_density-1) / 2;
+	m_upper_left_lat = m_latitude - (m_width_degrees / 2);
+	m_upper_left_lon = m_longitude - (m_width_degrees / 2);
 	
 	// Setup the map
 	m_map = new float*[m_density];

@@ -70,6 +70,7 @@ public:
 	double get_density() { return m_density; }
 	float get_height(size_t, size_t);
 	double get_spacing_meters() { return m_spacing_meters; }
+	double get_width_meters() { return m_width_meters; }
 };
 
 }
