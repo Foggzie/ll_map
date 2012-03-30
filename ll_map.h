@@ -63,6 +63,7 @@ public:
 	void from_ll_to_xy(double, double, size_t*, size_t*);
 	void from_xy_to_int(size_t, size_t, size_t*);
 	void from_xy_to_ll(size_t, size_t, double*, double*);
+	float get_height(size_t, size_t);
 };
 
 #endif

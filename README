@@ -1,10 +1,13 @@
-The use of ll_map is simple.
+Use ll_map to pull a height map of a given geographic location from MapQuest's Elevation RESTful API
 
+To accomplish this:
 1) Instanciate an ll_map with no arguments passed to the constructor.
-2) call 'build_map(double, double, double, size_t)'
+2) call 'build_map(double lat, double lon, double width, size_t density)'
 3) 'build_map(4)' takes the parameters:
 	latitude - a geographic latitude
 	longitude - a geographic longitude
 	width - a width in meters
 	density - the number of points to grab in each direction
-4)
+4) The data can then be retrieved with 'get_height(size_t x, size_t y)' where:
+	x is the x index of your map
+	y is the y index of your map

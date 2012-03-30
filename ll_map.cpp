@@ -42,22 +42,6 @@ void pull_data(double* ll, double* heights, size_t num_points) {
 	}
 
 	std::cout << elevUrl;
-/*
-	for (size_t i = 0; i < num_points; i++) {
-		std::stringstream ss;
-		ss << 10.0;
-		elevUrl += ss.str();
-		elevUrl += ",";
-
-		std::stringstream ss2;
-		ss2 << (10.0 + (0.001 * i));
-		elevUrl += ss2.str();
-
-		if (1 < num_points - 1)
-			elevUrl += ",";
-	}
-*/
-	//std::cout << elevUrl << std::endl;
 
 	// Global init curl
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -80,7 +64,7 @@ void pull_data(double* ll, double* heights, size_t num_points) {
 
 		// Work that libcurl magic
 		CURLcode curlErr = curl_easy_perform(curlHandle);
-		printf("\n%s\n", xml_data->ptr);
+		//printf("\n%s\n", xml_data->ptr);
 
 		// Where there any errors with libcurl
 		if (curlErr) {
@@ -266,4 +250,11 @@ void ll_map::from_xy_to_ll(size_t x, size_t y, double* lat, double* lon) {
 	// Set the new latitudes and longitudes
 	*lat = new_lat;
 	*lon = new_lon;
+}
+
+float ll_map::get_height(size_t x, size_t y) {
+	if (x >= m_density || y >= m_density)
+		return 0;
+
+	return m_map[x][y];
 }
